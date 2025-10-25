@@ -50,6 +50,18 @@
           </label>
         </a>
       </li>
+      <li *ngIf="!isSaveingCharas" (click)="saveCharas()">
+          <a routerLink="/" routerLinkActive="active">
+              <div><i class="material-icons">sim_card_download</i></div>
+              <div>全キャラ保存</div>
+          </a>
+      </li>
+      <li *ngIf="isSaveingCharas" style="pointer-events: none;">
+          <a>
+              <div><i class="material-icons vibration-amine">sd_storage</i></div>
+              <div>{{progresPercent}}%</div>
+          </a>
+      </li>
       <li *ngIf="!isSaveing" (click)="save()">
         <a routerLink="/" routerLinkActive="active">
           <div><i class="material-icons">sd_storage</i></div>
