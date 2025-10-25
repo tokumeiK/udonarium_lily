@@ -7,3 +7,6 @@ webrtc:
         credential: homeo
 app: #未使用
 dice: #未使用
+backend:
+  mode: skyway2023
+  url: https://udonarium-backend.yutarou02.workers.dev/ #Your Backend API URL
