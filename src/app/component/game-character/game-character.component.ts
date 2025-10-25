@@ -29,6 +29,8 @@ import { PanelOption, PanelService } from 'service/panel.service';
 import { PointerDeviceService } from 'service/pointer-device.service';
 import { RemoteControllerComponent } from 'component/remote-controller/remote-controller.component';
 import { GameCharacterBuffViewComponent } from 'component/game-character-buff-view/game-character-buff-view.component';
+import { TabletopService } from 'service/tabletop.service';
+import { DataElement } from '@udonarium/data-element';
 
 @Component({
   selector: 'game-character',
@@ -73,6 +75,45 @@ export class GameCharacterComponent implements OnInit, OnDestroy, AfterViewInit 
   set isDropShadow(isDropShadow: boolean) { this.gameCharacter.isDropShadow = isDropShadow; }
   get isAltitudeIndicate(): boolean { return this.gameCharacter.isAltitudeIndicate; }
   set isAltitudeIndicate(isAltitudeIndicate: boolean) { this.gameCharacter.isAltitudeIndicate = isAltitudeIndicate; }
+
+  // gk0.2.0 hp/mpバーの表示に使うやつ
+  get hashp(): boolean {
+    let hp = this.gameCharacter.detailDataElement.getFirstElementByName('HP');
+    if(hp!=null)
+      if(hp.value!=null)
+        return !isNaN(Number(hp.value));
+    return false;
+  }
+  get maxhp(): string {
+    let hp = this.gameCharacter.detailDataElement.getFirstElementByName('HP');
+    return hp.value.toString();
+  }
+  get currenthp(): string {
+    let hp = this.gameCharacter.detailDataElement.getFirstElementByName('HP');
+    let ret = Number(hp.currentValue)<0 ? 0:hp.currentValue;
+    return ret.toString();
+  }
+  get hasmp(): boolean {
+    let mp = this.gameCharacter.detailDataElement.getFirstElementByName('MP');
+    if(mp!=null)
+      if(mp.value!=null)
+        return !isNaN(Number(mp.value));
+    return false;
+  }
+  get maxmp(): string {
+    let mp = this.gameCharacter.detailDataElement.getFirstElementByName('MP');
+    return mp.value.toString();
+  }
+  get currentmp(): string {
+    let mp = this.gameCharacter.detailDataElement.getFirstElementByName('MP');
+    let ret = Number(mp.currentValue)<0 ? 0:mp.currentValue;
+    return ret.toString();
+  }
+  get tenperhp(): string {
+    let hp = this.gameCharacter.detailDataElement.getFirstElementByName('HP');
+    return (1000 / (hp.value as number) | 0).toString();
+  }
+
 
   private foldingBuff: boolean = false;
   gridSize: number = 50;

@@ -305,6 +305,31 @@
   vertical-align: middle;
 }
 
+.barline {
+    width: 0px;
+    height: 6px;
+    border: solid thin #ff0;
+    position: absolute;
+    background-color: #fff;
+    -webkit-border-radius: 2px;
+    -moz-border-radius: 2px;
+    border-radius: 2px;
+    transform-origin: 100% 100%;
+    transform-style: preserve-3d;
+    transform: translateX(0px) translateY(0px) translateZ(0px) rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+}
+
+.barstripe {
+    width: 10px;
+    height: 10px;
+    position: absolute;
+    background-image: repeating-linear-gradient( 90deg, rgba(255, 255, 255, 0.6) 70%, #fb5b5b 70%, #fb5b5b 100%);
+    background-size: 100% 100%;
+    transform-origin: 100% 100%;
+    transform-style: preserve-3d;
+    transform: translateX(2px) translateY(1px) translateZ(0px) rotateX(0deg) rotateY(0deg) rotateZ(0deg);
+}
+
 @keyframes focused {
   0% { box-shadow: none; }
   50% { box-shadow:
@@ -374,7 +399,7 @@
   left: -10px;
   box-sizing: border-box;
   position: absolute;
-  margin-top:
+  margin-top: 0px;
 }
 
 .target-icon-buff2 {
@@ -384,7 +409,7 @@
   left: -20px;
   box-sizing: border-box;
   position: absolute;
-  margin-top:
+  margin-top: 0px;
 }
 
 .scrolldown5{
