@@ -104,7 +104,7 @@
         </div>
       </div>
       <div class="table-cell">
-        <div *ngIf="gameObject.rootDataElement">
+        <div *ngIf="gameObject.rootDataElement && !gameObject.hideInformation">
           <ng-container *ngFor="let dataElm of getInventoryTags(gameObject); trackBy: trackByGameObject">
             <ng-container *ngTemplateOutlet="dataElmTag; context:{ dataElm: dataElm}"></ng-container>
           </ng-container>

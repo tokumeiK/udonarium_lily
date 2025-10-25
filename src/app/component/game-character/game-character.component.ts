@@ -376,6 +376,11 @@ export class GameCharacterComponent implements OnInit, OnDestroy, AfterViewInit 
     SoundEffect.play(PresetSound.piecePut);
   }
 
+  onAuxClick(e) {
+    if(e.which == 2)
+      this.gameCharacter.hideInformation = !this.gameCharacter.hideInformation;
+  }
+
   checkKey(event) {
     //イベント処理
     let key_event = event || window.event;

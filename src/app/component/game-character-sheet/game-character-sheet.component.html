@@ -109,6 +109,10 @@
           発言をしない
           <input type="checkbox" value="hideInventory"  [(ngModel)]="tabletopObject.nonTalkFlag" name="nonTalkFlag" (click)="clickNoTalk()">
         </div>
+        <div>
+            情報秘匿
+            <input type="checkbox" value="hideInformation" [(ngModel)]="tabletopObject.hideInformation" name="hideInformation" (click)="clickHideInformation()">
+        </div>
         <div >
           ポップアップ横幅
             <input type="range" [style]="'font-size: 0.8em; min-width: 1em; width:' + (10) + 'em; --min: 0; --max: ' + 0 + '; --val:' + 10 +';' | safe: 'style'"

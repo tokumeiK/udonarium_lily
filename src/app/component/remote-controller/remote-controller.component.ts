@@ -27,10 +27,10 @@ import { PointerDeviceService } from 'service/pointer-device.service';
 import { GameDataElementBuffComponent } from 'component/game-data-element-buff/game-data-element-buff.component';
 import { GameCharacterBuffViewComponent } from 'component/game-character-buff-view/game-character-buff-view.component';
 
-class RemoteControllerSelect {
+class RemotControllerSelect  {
+    identifier: string;
+    type: string;
     name: string;
-    nowOrMax: string;
-    dispName: string;
 }
 
 @Component({
@@ -45,13 +45,13 @@ export class RemoteControllerComponent implements OnInit, OnDestroy, AfterViewIn
 
   private _gameSystem: GameSystemClass;
 
-  get gameType(): string { return this._gameSystem == null ? '' : this._gameSystem.ID; }
+  get gameType(): string { return this._gameSystem == null ? '' : this._gameSystem.ID };
   set gameType(gameType: string) {
     DiceBot.loadGameSystemAsync(gameType).then((gameSystem) => {
       this._gameSystem = gameSystem;
       if (this.character.remoteController) { this.character.remoteController.dicebot = gameSystem.ID; }
     });
-  }
+  };
 
   get sendFrom(): string { return this.character.identifier; }
   set sendFrom(sendFrom: string) {
@@ -75,7 +75,7 @@ export class RemoteControllerComponent implements OnInit, OnDestroy, AfterViewIn
 
   ) {
     this.initTimestamp = Date.now();
-    console.log('this.initTimestamp ' + this.initTimestamp);
+    console.log('constructor this.initTimestamp ' + this.initTimestamp);
   }
 
   get sortTag(): string { return this.inventoryService.sortTag; }
@@ -97,29 +97,32 @@ export class RemoteControllerComponent implements OnInit, OnDestroy, AfterViewIn
 
   private _gameType = '';
   private initTimestamp = 0;
-  text = '';
-
+  
   public buffAreaIsHide = false;
   public controllerAreaIsHide = false;
 
   chatTabidentifier = '';
   remoteNumber = 0;
+  numOfBlockingTimes = 0;
 
-  recoveryLimitFlag = false;
-  recoveryLimitFlagMin = false;
+  recoveryLimitFlag = true;
+  get includeBlockFlag(): boolean { return this.numOfBlockingTimes != 0; }
+  instantShowFlag = true;
 
   disptimer = null;
   selectCharacter = null;
 
-  remoteControllerSelect: RemoteControllerSelect = {
-    name : '',
-    nowOrMax : '',
-    dispName : ''
+  remoteControllerSelect: RemotControllerSelect  = {
+    identifier : '',
+    type : '',
+    name : ''
   };
-  remoteControllerRadio = '';
+  remotControllerRadio = '';
 
-  remoteControlleridentifier: string[] = ['test01', 'test02'];
-  inputText = '';
+  remotControlleridentifier: string[] = ['test01', 'test02'];
+  testTag  = '0001';
+  _text = '';
+  sendTo = '';  
   isEdit = false;
   editPalette = '';
 
@@ -138,18 +141,25 @@ export class RemoteControllerComponent implements OnInit, OnDestroy, AfterViewIn
     this.controllerAreaIsHide = eventValue;
   }
   recoveryLimitFlagChange( value ){
-    // 現状特に処理なし
+  // 状態を見て処理分けしているので状態変更時は特に処理なし
+  }
+  includeBlockFlagChange(value) {
+  // same.
+  }
+  instantShowFlagChange(value) {
+  // same.
   }
 
 
   reverseValue(){
-    this.remoteNumber = -this.remoteNumber;
+    this.remoteNumber = -1 * this.remoteNumber;
   }
 
-  remoteSelect( name: string , nowOrMax: string , dispName: string ){
+  remoteSelect(identifier: string, type: string, name: string){
+    this.remoteControllerSelect.identifier = identifier;
+    this.remoteControllerSelect.type = type;
     this.remoteControllerSelect.name = name;
-    this.remoteControllerSelect.nowOrMax = nowOrMax;
-    this.remoteControllerSelect.dispName = dispName;
+    console.log(this.remoteControllerSelect);
   }
 
   charListChange(charName: string, checked: boolean) {
@@ -215,6 +225,8 @@ export class RemoteControllerComponent implements OnInit, OnDestroy, AfterViewIn
         }
       }
     }, 200 );
+    // console.log('ngOnInit this.initTimestamp ' + this.initTimestamp);
+    this.remoteSelect('HP', 'currentValue', 'HP現在値');
   }
 
 
@@ -240,16 +252,16 @@ export class RemoteControllerComponent implements OnInit, OnDestroy, AfterViewIn
   }
 
   selectPalette(line: string) {
-    this.text = line;
+    this._text = line;
   }
 
   clickPalette(line: string) {
-    if (this.doubleClickTimer && this.text === line) {
+    if (this.doubleClickTimer && this._text === line) {
       clearTimeout(this.doubleClickTimer);
       this.doubleClickTimer = null;
       this.controllerInputComponent.sendChat(null);
     } else {
-      this.text = line;
+      this._text = line;
       this.doubleClickTimer = setTimeout(() => { this.doubleClickTimer = null; }, 400);
     }
   }
@@ -342,7 +354,25 @@ export class RemoteControllerComponent implements OnInit, OnDestroy, AfterViewIn
     return gameCharacters;
   }
 
-  remoteDecBuffRound( checkedOnly: boolean ){
+  remotBuffRoundDo(gameCharacters: GameCharacter[]) {
+    if (gameCharacters.length <= 0) { return; }
+    for (const character of gameCharacters) {
+      if (character.buffDataElement.children) {
+        for (const dataElm of character.buffDataElement.children) {
+          for (const data of dataElm.children) {
+            let oldNumS = '';
+            let sum: number;
+            oldNumS = (data.value as string);
+            sum = parseInt(oldNumS);
+            sum = sum - 1;
+            data.value = sum;
+          }
+        }
+      }
+    }
+  }
+
+  remotBuffRound(checkedOnly: boolean) {
     let text = '';
     const gameCharacters = this.getTargetCharacters( checkedOnly );
     if ( gameCharacters.length <= 0 ) { return; }
@@ -351,53 +381,100 @@ export class RemoteControllerComponent implements OnInit, OnDestroy, AfterViewIn
     const mess = '';
     if ( gameCharacters.length > 0){
       for (const object of gameCharacters){
-        object.decreaseBuffRound();
         text = text + '[' + object.name + ']';
+        this.remotBuffRoundDo(gameCharacters);
       }
-      const mess = 'バフのRを減少 ' + text;
-      this.chatMessageService.sendMessage(this.chatTab, mess, this._gameSystem, this.sendFrom, '', this.controllerInputComponent.tachieNum);
+      let  mess = 'バフのRを減少 ' + text;
+      this.chatMessageService.sendMessage(this.chatTab, mess, this._gameSystem, this.sendFrom, this.sendTo, this.controllerInputComponent.tachieNum);
     }
   }
 
-  decBuffRoundSelect(){
-    this.remoteDecBuffRound( true );
+  remotBuffRoundSelect(){
+    this.remotBuffRound( true );
   }
 
-  decBuffRoundAll(){
-    this.remoteDecBuffRound( false );
+  remotBuffRoundALL(){
+    this.remotBuffRound( false );
   }
 
-  remoteBuffDeleteZeroRound( checkedOnly: boolean ){
+  remotBuffDeleteZeroRoundDo(gameCharacters: GameCharacter[]): string {
+    let retmess = '';
+    if (gameCharacters.length > 0) {
+      for (const character of gameCharacters) {
+        if (character.buffDataElement.children) {
+          for (const dataElm of character.buffDataElement.children) {
+            for (const data of dataElm.children) {
+              let oldNumS = '';
+              let num: number;
+
+              oldNumS = (data.value as string);
+              num = parseInt(oldNumS);
+              if (num <= 0) {
+                retmess += '\r\n[remove]' + character.name + ':' + data.getAttribute("name");
+                data.destroy();
+              }
+            }
+          }
+        }
+      }
+    }
+    return retmess;
+  }
+
+  private reactiveTimer: NodeJS.Timer;
+  remotBuffDeleteZeroRound( checkedOnly: boolean ){
     let text = '';
     const gameCharacters = this.getTargetCharacters( checkedOnly );
     const mess = '';
     if ( gameCharacters.length > 0){
       for (const object of gameCharacters){
-        object.deleteZeroRoundBuff();
         text = text + '[' + object.name + ']';
       }
-      const mess = '0R以下のバフを消去 ' + text;
-      this.chatMessageService.sendMessage(this.chatTab, mess, this._gameSystem, this.sendFrom, '', this.controllerInputComponent.tachieNum);
+      this.reactiveTimer = setTimeout(() => {
+        this.reactiveTimer = null;
+        const gChars = this.getTargetCharacters(false);
+        if (gChars.length > 0)
+          for (const obj of gChars){
+          }
+      }, 2020);
+      let mess = 'ラウンド進行:' + this.remotBuffDeleteZeroRoundDo(gameCharacters) + ' NextR'; // cutinをキック
+      this.chatMessageService.sendMessage(this.chatTab, mess, this._gameSystem, this.sendFrom, this.sendTo, this.controllerInputComponent.tachieNum);
     }
   }
 
-  deleteZeroRoundBuffSelect(){
-    this.remoteBuffDeleteZeroRound( true );
+  remotBuffDeleteZeroRoundSelect(){
+    this.remotBuffDeleteZeroRound( true );
   }
 
-  deleteZeroRoundBuffAll(){
-    this.remoteBuffDeleteZeroRound( false );
+  remotBuffDeleteZeroRoundALL(){
+    this.remotBuffDeleteZeroRound( false );
   }
 
-  remoteAddBuffRound(gameCharacters: GameCharacter[], name: string, info: string, round: number){
+  goBuffRoundALL() {
+    this.remotBuffRoundALL();
+    this.remotBuffDeleteZeroRoundALL();
+  }
+
+  remoteAddBuffRound(gameCharacters: GameCharacter[], name: string, subcom: string, round: number){
     const text = '';
-    if ( gameCharacters.length <= 0 ) { return; }
-    for (const character of gameCharacters){
-      character.addBuffRound(name, info, round);
+    if (gameCharacters.length <= 0) { return; }
+    for (const character of gameCharacters) {
+      if (character.buffDataElement.children) {
+        for (const dataElm of character.buffDataElement.children) {
+          const data = character.buffDataElement.getFirstElementByName(name);
+          if (data) {
+            data.value = round;
+            data.currentValue = subcom;
+          } else {
+            dataElm.appendChild(DataElement.create(name, round, { type: 'numberResource', currentValue: subcom },));
+          }
+
+        }
+      }
     }
   }
 
-  sendChat(value: { text: string, gameSystem: GameSystemClass, sendFrom: string, '': string , tachieNum: number , messColor: string }) {
+  sendChat(value: { text: string, gameSystem: GameSystemClass, sendFrom: string, sendTo: string , tachieNum: number , messColor: string }) {
 
     let text = '';
     const gameCharacters = this.getTargetCharacters( true );
@@ -435,8 +512,8 @@ export class RemoteControllerComponent implements OnInit, OnDestroy, AfterViewIn
 
       this.remoteAddBuffRound(gameCharacters, buffname, sub, round);
 
-      const mess = 'バフを付与 ' + bufftext + ' > ' + text;
-      this.chatMessageService.sendMessage(this.chatTab, mess, this._gameSystem, this.sendFrom, '', value.tachieNum , value.messColor );
+      let mess = bufftext + '\r\n > ' + text;
+      this.chatMessageService.sendMessage(this.chatTab, mess, this._gameSystem, this.sendFrom, this.sendTo, value.tachieNum , value.messColor );
       this.errorMessageBuff = '';
     }else{
       this.errorMessageBuff = '対象が未選択です';
@@ -446,21 +523,66 @@ export class RemoteControllerComponent implements OnInit, OnDestroy, AfterViewIn
   remoteChangeValue(){
     let text = '';
     const gameCharacters = this.getTargetCharacters( true );
-    if (this.remoteControllerSelect.name == ''){
+    if (this.remoteControllerSelect.identifier  == ''){
       this.errorMessageController = '変更項目が未選択です';
       return;
     }
     for (const object of gameCharacters){
-      const name = this.remoteControllerSelect.name;
-      const nowOrMax = this.remoteControllerSelect.nowOrMax;
-      const addValue = this.remoteNumber;
-      text += object.changeStatusValue(name, nowOrMax, addValue, this.recoveryLimitFlagMin, this.recoveryLimitFlag );
+      const data = object.detailDataElement.getFirstElementByName(this.remoteControllerSelect.identifier);
+      if (data) {
+        let oldNumS = '';
+        let newNum: number;
+        let sum: number;
+        if (this.remoteControllerSelect.type == 'value') {
+          oldNumS = (data.value as string);
+          sum = parseInt(oldNumS);
+          sum = sum + this.remoteNumber;
+          data.value = sum;
+          newNum = (data.value as number);
+        }
+
+        let maxRecoveryMess = '';
+        if (this.remoteControllerSelect.type == 'currentValue') {
+          let bt = object.detailDataElement.getFirstElementByName('防護点');
+          let b = object.detailDataElement.getFirstElementByName('防護');
+          let gb = object.detailDataElement.getFirstElementByName('概算防護');
+          let blockpoint: number = (bt) ? parseInt(bt.value as string) : (b) ? parseInt(b.value as string) : 0;
+          blockpoint += (gb) ? parseInt(gb.currentValue as string) : 0;
+          if (this.includeBlockFlag && data.name == 'HP' && blockpoint > 0 && this.remoteNumber < 0) {
+            //           for(const buff of object.buff)
+            //             blockpoint += (object.buff as number); // 一旦バフは考慮しない
+            oldNumS = (data.currentValue as string);
+            sum = parseInt(oldNumS);
+            sum = sum + this.remoteNumber + (((this.remoteNumber + blockpoint * this.numOfBlockingTimes) > 0) ? -this.remoteNumber : blockpoint * this.numOfBlockingTimes);
+            data.currentValue = sum;
+            maxRecoveryMess += ' :防-' + blockpoint.toString() + (this.numOfBlockingTimes > 0 ? ('x' + this.numOfBlockingTimes) : '');
+          } else {
+            oldNumS = (data.currentValue as string);
+            sum = parseInt(oldNumS);
+            sum = sum + this.remoteNumber;
+            data.currentValue = sum;
+          }
+          if (this.recoveryLimitFlag && data.currentValue >= Number(data.value)) {
+            maxRecoveryMess += '(max)';
+            data.currentValue = data.value;
+          }
+          if (Number(data.currentValue) < 1) {
+            maxRecoveryMess += '(気絶/死亡)'
+          }
+          newNum = (data.currentValue as number);
+        }
+        if (object.hideInformation) {
+          text = text + '[' + object.name + ' ?? > ??' + maxRecoveryMess + '] \r\n';
+        } else {
+          text = text + '[' + object.name + ' ' + oldNumS + ' > ' + newNum + maxRecoveryMess + '] \r\n';
+        }
+      }
     }
     if ( text != '' ){
       let hugou = '+';
       if ( this.remoteNumber < 0) { hugou = ''; }
-      const mess = '[' + this.remoteControllerSelect.dispName + ']変更[' + hugou + this.remoteNumber + ']＞' + text;
-      this.chatMessageService.sendMessage(this.chatTab, mess, this._gameSystem, this.sendFrom, '', this.controllerInputComponent.tachieNum , this.controllerInputComponent.selectChatColor );
+      let  mess = '[' + this.remoteControllerSelect.name  + ']変更[' + hugou + this.remoteNumber + ']＞\r\n' + text;
+      this.chatMessageService.sendMessage(this.chatTab, mess, this._gameSystem, this.sendFrom, this.sendTo, this.controllerInputComponent.tachieNum , this.controllerInputComponent.selectChatColor );
       this.errorMessageController = '';
     }else{
       this.errorMessageController = '対象キャラクターが未選択です';

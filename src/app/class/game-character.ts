@@ -23,6 +23,7 @@ export class GameCharacter extends TabletopObject {
   @SyncVar() roll: number = 0;
   @SyncVar() isDropShadow: boolean = false;
 
+  @SyncVar() hideInformation: boolean = false;
   @SyncVar() hideInventory: boolean = false;
   @SyncVar() nonTalkFlag: boolean = false;
   @SyncVar() overViewWidth: number = 270;
@@ -661,7 +662,7 @@ export class GameCharacter extends TabletopObject {
       this.setStatusValue(name, nowOrMax, sum);
     }
     if ( type == 'currentValue'){
-      if ( sum >= data.value && limitMax){
+      if ( sum >=  Number(data.value) && limitMax){
         maxRecoveryMess = '(最大)';
         sum = this.getStatusValue(name,'max');
       }

@@ -98,9 +98,11 @@
 
         <ng-container *ngFor="let dataElm of inventoryDataElms">
           <ng-container *ngIf="dataElm && dataElm.name !== newLineString">
-            <div class="grid-container">
+            <ng-container *ngIf="!hideInformation">
+              <div class="grid-container">
               <ng-container *ngTemplateOutlet="dataElement; context: { dataElm: dataElm }"></ng-container>
-            </div>
+              </div>
+            </ng-container>
           </ng-container>
         </ng-container>
       </div>
