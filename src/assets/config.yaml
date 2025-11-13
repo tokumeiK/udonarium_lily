@@ -1,6 +1,6 @@
 backend:
   mode: skyway2023
-  url: https://c742ed47.back-bsa.pages.dev/ #Your Backend API URL
+  url: https://backend.yutarou02.workers.dev/ #Your Backend API URL
 
 webrtc:
   key: aaaaaaaa-bbbb-ccccc-dddd-eeeeeeeeeeee  #Your SkyWay API key
